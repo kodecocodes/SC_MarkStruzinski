@@ -65,3 +65,14 @@ In order to demonstrate this functionality properly, I have created a Ruby on Ra
 8. Tap the Request Login with Shared Credentials button 
 9. A prompt should appear with the credentials that were just entered. After accepting, they should pre-fill into the username and password fields, and a simulated login will run
 10. Make note that this action would normally run automatically on a login screen, but since this is a single view app, we needed a way to trigger it manually.
+
+##### Notes
+- Apple recommends storing credentials in the local device keychain after retrieving them from shared credentials. They say to not use Shared Credentials as your system of record. To avoid additional complexity, I didn't include this step, but we should at least mention it.
+- Ideally, login would happen transparently up until the Shared Credentials prompt, but because this was a single view app and I needed a way to trigger the prompt manually after storing the credentials, I included a button at the top of the view to initiate everything
+- The Login button at the bottom of the view is completely for demo purposes to show a standard login screen and to display proper state
+
+---------
+#### Reference
+- https://developer.apple.com/documentation/security/shared_web_credentials
+- https://developer.apple.com/documentation/security/shared_web_credentials/preparing_your_app_and_website_to_share
+- https://developer.apple.com/documentation/security/shared_web_credentials/managing_shared_credentials
