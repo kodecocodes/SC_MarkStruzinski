@@ -37,20 +37,24 @@ In order to demonstrate this functionality properly, I have created a Ruby on Ra
 
 ##### Dev Portal Setup
 1. Go to the developer portal and create a new iOS app. 
-2. In the newly created app, enable the Associated Domains capability
+2. After saving the newly created app, enable the Associated Domains capability
+![associated domains](images/associated-domains.png)
 3. Copy the bundle id of the new app (along with the Team Identifier prefix)
 
 #### Updating the Site Association File
 1. Go back to the web app on local disk
 2. Open Config => initializers => apple-app-site-association.rb
 3. Update the `apps` array to use the team prefix and bundle id copied from the dev portal
+![rails site association](images/rails-site-association.png)
 4. Commit this change, and push again to the heroku remote
 
 #### iOS App Setup
 1. Go to the app target settings, and open the Capabilities tab
 2. Enable the Associated Domains capability
 3. Click the `+` button, and enter `webcredentials:<heroku domain>` from the previous steps. Make sure you don't include the `https://` in this value
+![associated domains capability](images/associated-domains-capability.png)
 4. Open the General tab in target settings, and set the bundle id to the one created on the portal
+![bundle id](images/bundle-id.png)
 5. Open `LoginViewController`, and update the static site URL at the top of the file to the newly created site
 6. Walk through the existing code to explain how the web credentials are pulled from iOS in the `attemptLoginFromSharedCredentials()` function
 
