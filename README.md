@@ -1,10 +1,10 @@
 ## Introduction
 
-Hey what's up everybody, this is ___. In today's screencast, I'm going to introduce you to Shared Web Credentials. Shared Web Credentials allows you to easily log a user into your app if they have already logged into your website via Safari or Mobile Safari. 
+Hey what's up everybody, this is ___. In today's screencast, I'm going to introduce you to Shared Web Credentials. Shared Web Credentials is a technology Apple has introduced to allow seamless login into your iOS app once a user has logged into your website using Safari.
 
 Before we begin, I just want to give a shout out to the author of this content, Mark Struzinski, and the Tech Editor, David Worsham. 
 
-Ok, back to Shared Credentials. Shared Web Credentials is a technology Apple has introduced to allow seamless login into your iOS app once a user has logged into your website using Safari. Shared Web Credentials works using iCloud Keychain, and establishes trust between your site and your app via the site association file. This is a file Apple requires you to host on your domain to establish a trust relationship between the site and your app. If your user has opted into iCloud Keychain and has elected to store their credentials there, you will be able to present UI that allows them to use those same credentials to log in to your  app, without the need to type a username or password.
+Ok, back to it. Shared Web Credentials works using iCloud Keychain, and establishes trust between your site and your app via the site association file. This is a file Apple requires you to host on your domain to establish a trust relationship between the site and your app. If your user has opted into iCloud Keychain and has elected to store their credentials there, you will be able to present UI that allows them to use those same credentials to log in to your app without the need to type a username or password.
 
 There are 2 components that come together to ensure Shared Web Credentials can offer login functionality:
 
