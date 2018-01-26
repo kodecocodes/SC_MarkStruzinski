@@ -99,6 +99,8 @@ private func openWebsite() {
 8. Enter any email address and password (it doesn't matter which, the site will accept any properly formatted email address and any password)
 9. Once you tap Login or hit the Enter key, you should be prompted by Mobile Safari to Save Password. Accept this prompt. 
   
+**Accessing Shared Credentials From Your App**
+
 We now have stored credentials for your new domain in iCloud Keychain. The final step will be to set the app up to read them, and we'll be able to use them to log your user in without having to enter them manually
 
 1. Stop the app, and go back to `LoginViewController`
@@ -106,61 +108,74 @@ We now have stored credentials for your new domain in iCloud Keychain. The final
 
 ```
   private func attemptLoginFromSharedCredentials() {
-    // 1
-    updateUIForNetworkCall(inProgress: true)
-    
-    // 2
-    SecRequestSharedWebCredential(nil, nil) { [weak self] (results, error) in
-      // 3 & 4
-      guard error == nil,
-        let strongSelf = self else {
-        print("Error encountered: \(error!)")
-        return
-      }
-      
-      // 5
-      guard let credentials = results,
-        CFArrayGetCount(credentials) > 0 else {
-        return
-      }
 
-      // 6
-      let unsafeCredentials = CFArrayGetValueAtIndex(credentials, 0)
-      let credentialsDict = unsafeBitCast(unsafeCredentials, to: CFDictionary.self)
-      
-      // 7
-      let unsafeLoginValue = strongSelf.unsafeValue(from: credentialsDict, for: kSecAttrAccount)
-      let unsafePasswordValue = strongSelf.unsafeValue(from: credentialsDict, for: kSecSharedPassword)
-      
-      guard let unsafeLogin = unsafeLoginValue,
-        let unsafePassword = unsafePasswordValue else {
-        return
-      }
-
-      // 8
-      let username = strongSelf.unsafeBitcastToString(from: unsafeLogin)
-      let password = strongSelf.unsafeBitcastToString(from: unsafePassword)
-      
-      // 9
-      strongSelf.fillCredentialsAndLogin(withUserName: username,
-                                         password: password)
-    }
   }
-  ```
-  
-  Here is an explanation of what this code does:
-  
-  1. Shows some UI to simulate a network event
-  2. Next we call `SecRequestSharedWebCredentials` and pass nil for the fully qualified domain name and user account. We could request credentials for only our domain, and even a specific user account, but we won't get that specific here.
-  3. Inside that asynchronous request, we pass a completion block for execution when the call completes.
-  4. First we guard against an error. If the error parameter on the completion block is not nil, then something has failed. We log it and exit.
-  5. Next we perform a count on the CFArray parameter returned in the completion block. If the array is not nil, and the count is larger than 0, we got a match back that we can work with.
-  6. Next we need to get a pointer to the response object returned in the array. Since we know it's the first object in the array, we grab the one at index 0 and cast it to a `CFDictionary`. 
-  7. After we have a reference to the `CFDictionary`, we use a convenience method to retrieve pointers to the username and password values.
-  8. Finally, we turn these into Swift strings with another convenience method.
-  9. After all that, we finally have a reference to our username and password!
-  10. We use those newly created values to populate the username and password fields on the login screen, and invoke the login sequence for the user. In this app, the network request is simulated, but in your production app, you would obviously connect this up to a live API request.
-  11. Finally, inside `requestSharedCredentialsTapped(_:)`, make a call to `attemptLoginFromSharedCredentials()`. Normally you would initiate this immediately on the Login screen, but since this is a single view app, we needed a way to trigger it manually.
+```
+
+3. Next we'll show some mocked up UI to simulate a network event. Add this to your new method:
+```
+updateUIForNetworkCall(inProgress: true)
+```
+
+4. Now we'll call the system API `SecRequestSharedWebCredentials` to request permission to the stored iCloud credentials for our site. We could request credentials for only our domain, and even a specific user account, but we won't get that specific here. We'll pass `nil` for those 2 parameters. Add this code next:
+
+```
+SecRequestSharedWebCredential(nil, nil) { [weak self] (results, error) in
+
+}
+```
+
+5. The first thing we'll do after the request completes is to guard against any errors. If the error parameter on the completion block is not nil, then something has failed. We'll log it and exit. We'll also grab a strong reference to the viewcontroller from the capture list above to prevent any retain cycles. Add this code first right inside the completion block:
+```
+guard error == nil,
+  let strongSelf = self else {
+  print("Error encountered: \(error!)")
+  return
+}
+```
+
+6. Next we'll perform a count on the `CFArray` parameter returned in the completion block. If the array is not nil, and the count is larger than 0, we got a match back that we can work with. Add this code right below the error `guard`:
+```
+guard let credentials = results,
+  CFArrayGetCount(credentials) > 0 else {
+  return
+}
+```
+
+7. Next we need to get a pointer to the response object returned in the array. Since we know it's the first object in the array, we grab the one at index 0 and cast it to a `CFDictionary`. Add this code next:
+
+```
+let unsafeCredentials = CFArrayGetValueAtIndex(credentials, 0)
+let credentialsDict = unsafeBitCast(unsafeCredentials, to: CFDictionary.self)
+```
+
+8. After we have a reference to the `CFDictionary`, we use a convenience method to retrieve pointers to the username and password values, and make sure we have valid objects back. Add this under the 2 variables you just created:
+
+```
+let unsafeLoginValue = strongSelf.unsafeValue(from: credentialsDict, for: kSecAttrAccount)
+let unsafePasswordValue = strongSelf.unsafeValue(from: credentialsDict, for: kSecSharedPassword)
+
+guard let unsafeLogin = unsafeLoginValue,
+  let unsafePassword = unsafePasswordValue else {
+  return
+}
+```
+
+9. Finally, we turn these into Swift strings with another convenience method. Add this set of calls to `unsafeBitcastToString:` next:
+
+```
+let username = strongSelf.unsafeBitcastToString(from: unsafeLogin)
+let password = strongSelf.unsafeBitcastToString(from: unsafePassword)
+```
+
+10. After all that, we finally have a reference to our username and password! We use those newly created values to populate the username and password fields on the login screen, and invoke the login sequence for the user. In this app, the network request is simulated, but in your production app, you would obviously connect this up to a live API request. Add this code to make the login request:
+
+```
+strongSelf.fillCredentialsAndLogin(withUserName: username,
+                                    password: password)
+```
+
+11. Finally, inside `requestSharedCredentialsTapped(_:)`, make a call to `attemptLoginFromSharedCredentials()`. Normally you would initiate this immediately when the Login screen comes into view, but since this is a single view app, we needed a way to trigger it manually.
 
 ##### Testing Your Shared Credentials
 1. Now, run the app in the simulator again.
