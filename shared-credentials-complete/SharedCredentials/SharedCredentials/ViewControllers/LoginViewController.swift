@@ -41,10 +41,41 @@ class LoginViewController: UIViewController {
   }
     
   @IBAction func requestSharedCredentialsTapped(_ sender: UIButton) {
+    attemptLoginFromSharedCredentials()
   }
     
   @IBAction func openWebsiteButtonTapped(_ sender: UIBarButtonItem) {
     openWebsite()
+  }
+  
+  private func attemptLoginFromSharedCredentials() {
+    updateUIForNetworkCall(inProgress: true)
+    
+    SecRequestSharedWebCredential(nil, nil) { [weak self] (results, error) in
+      guard error == nil, let strongSelf = self else {
+        return
+      }
+      
+      guard let credentials = results, CFArrayGetCount(credentials) > 0 else {
+        return
+      }
+      
+      let unsafeCredentials = CFArrayGetValueAtIndex(credentials, 0)
+      let credentialsDict = unsafeBitCast(unsafeCredentials, to: CFDictionary.self)
+      
+      let unsafeLoginValue = strongSelf.unsafeValue(from: credentialsDict, for: kSecAttrAccount)
+      let unsafePasswordValue = strongSelf.unsafeValue(from: credentialsDict, for: kSecSharedPassword)
+      
+      guard let unsafeLogin = unsafeLoginValue,
+        let unsafePassword = unsafePasswordValue else {
+          return
+      }
+      
+      let username = strongSelf.unsafeBitcastToString(from: unsafeLogin)
+      let password = strongSelf.unsafeBitcastToString(from: unsafePassword)
+      
+      strongSelf.fillCredentialsAndLogin(withUserName: username, password: password)
+    }
   }
   
   private func openWebsite() {

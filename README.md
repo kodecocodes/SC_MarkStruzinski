@@ -1,28 +1,29 @@
 ## Introduction
 
-Hey what's up everybody, this is ___. In today's screencast, I'm going to introduce you to Shared Web Credentials. Shared Web Credentials is a technology Apple has introduced to allow seamless login into your iOS app once a user has logged into your website using Safari.
+Hey what's up everybody, this is ___. In today's screencast, I'm going to introduce you to Shared Web Credentials. Shared Web Credentials is a technology Apple has introduced which allows seamless login into your iOS app after a user has logged into your website using Safari.
 
-Before we begin, I just want to give a shout out to the author of this content, Mark Struzinski, and the Tech Editor, David Worsham. 
+Before we begin, I just want to give a shout out to the the Tech Editor of this content, David Worsham. 
 
-Ok, back to it. Shared Web Credentials works using iCloud Keychain, and establishes trust between your site and your app via the site association file. This is a file Apple requires you to host on your domain to establish a trust relationship between the site and your app. If your user has opted into iCloud Keychain and has elected to store their credentials there, you will be able to present UI that allows them to use those same credentials to log in to your app without the need to type a username or password.
+Ok, back to it. Shared Web Credentials works using iCloud Keychain, and establishes trust between your site and your app via the site association file. This is a file Apple requires you to host on your domain. If your user has opted into iCloud Keychain and has elected to store their credentials for your domain there, you will be able to present UI that allows them to use those same credentials to log in to your app without the need to type a username or password.
 
 There are 2 components that come together to ensure Shared Web Credentials can offer login functionality:
 
 (Display keynote slide here)
 
 #### Your Web Server
-You must have a valid domain set up. From this domain, you must be able to serve up a file named **`apple-app-site-association`** from either the root of the domain or from a directory named **`.well-known`**. The following criteria must be met for the Shared Web Credentials functionality to work:
+From your domain, you must be able to serve up a file named **`apple-app-site-association`** from either the root of the domain or from a directory named **`.well-known`**. 
+
+The following criteria must be met for the Shared Web Credentials functionality to work:
 
 - The file must be hosted over SSL with a valid signed certificate
 - The file cannot use any redirects
 - The file cannot be larger than 128KB uncompressed
 - The file must hame MIME type `application/json`
 - The file must not have an extension
-- The file must be available at the root of the domain or in the `.well-known` directory
 - The json payload in the file must contain a `webcredentials` object
 - Inside the `webcredentials` object of this file, there has to be an array of bundle identifiers with the full team prefix. One of these identifiers has to match the one for your app.
 
-To easily meet those requirements for this demo, we will use the free Heroku web service to establish a domain.
+To easily meet those requirements for this demo, we're going to use the free Heroku web service to establish a domain.
 
 #### Your iOS App
 Your app's bundle id has to match the one being referenced by the **`apple-app-site-assocation`** file on your web server. Your app must also enable the **Associated Domains** capability, and you have to add your site domain to the domain list with a **`webcredentials`** prefix.
@@ -31,7 +32,11 @@ As you can see, there are some setup steps that need to be satisfied before we c
 
 ## Demo
 
-Our first step is to set up our web server. Since Shared Web Credentials requires a functioning domain set up over SSL, we will use a free [Heroku](https://www.heroku.com) account. Heroku offers up to 5 free domains, and will satisfy this Apple requirement.
+We'll have to set up 2 components to make Shared Credentials work - the iOS app and a web app. We'll start by configuring the web app, move over and configure the iOS app, then wrap up with some code in the iOS app to make everything work together.
+
+#### Web App Setup
+
+Our next step is to set up our web server. Since Shared Web Credentials requires a functioning domain set up over SSL, we will use a free [Heroku](https://www.heroku.com) account. Heroku offers up to 5 free domains, and will satisfy this Apple requirement.
 
 1. Head on over to the [Heroku Site](https://www.heroku.com). Setup a free account if you don't already have one, and log in.
 2. Set up the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) following the instructions for macOS using either homebrew or the native installer
@@ -59,45 +64,34 @@ First we'll need to configure the app to use the Associated Domains capability:
 1. Open the starter app, and click the blue Project node in the File Navigator
 2. Select the General tab in the center pane
 3. Select the app target in the left pane under the Targets heading.
-4. Enter the app's Bundle Id in the Bundle Identifier field here. This bundle id must match the one you set up on the web app (minus the team id prefix)
+4. Enter a Bundle Id in the Bundle Identifier field here. This bundle id will match the one you set up on the web app (minus the team id prefix) next
 ![bundle id](images/bundle-id.png)
 5. Select the Capabilties tab, scroll to the Associated Domains section, and click the switch to turn it on
 6. Click the **+** in this section, and enter your bundle id prefixed by `webcredentials:`. Example:  `webcredentials:com.test.shared-credentials`
 
 ![Associated Domain Capability](images/associated-domains-capability.png)
 
-This will set up the trust relationship with your new domain. Next we need to use the view controller to open the new domain.
+This will set up the trust relationship with your new domain. Next we need to set up the web app.
 
 ##### Setting up the App to Store Credentials in iCloud
 
 The first thing we'll need to do is open our newly created domain and attempt a login. This will get Safari to prompt us to store the credentials used for the site, and we can use them later to log the user into the app.
 
+First, we'll need to do some brief setup inside the iOS Simulator.
 
-First, we'll need to open Mobile Safari to the domain we've created.
+1. Open the simulator via Xcode's Developer Tool menu. After it's open, go to the Settings app. Verify you are logged in under your iCloud account. 
+2. After you're signed in, still inside the Settings app, navigate to Safari => Autofill, and turn on Names and Passwords. This will allow mobile Safari to prompt you to save your passwords on new sites.
+
+Now, we can add the code that will set up Shared Credentials
 
 1. Back in Xcode, open `LoginViewController.swift`
 2. At the top of the file, under all the `@IBOutlet` declarations, update the `websiteURLString` variable to match the homepage of your new domain that you got during the web app setup.
-3. Next, we'll define a utility function to open the webpage directly from the app. This is not a requirement, it is just easier to do it this way than to manually type in the domain's address into Mobile Safari through the simulator.
-4. Define a private func to open the website:
-
-```
-private func openWebsite() {
-    guard let url = URL(string: websiteURLString) else {
-      print("Unable to generate URL")
-      return
-    }
-    
-    UIApplication.shared.open(url,
-                              options: [:],
-                              completionHandler: nil)
-}
-```
-
-5. Next, we'll call that function from an `IBAction` that is already wired up to the **Open Website** bar button at the top of `LoginViewController`. Locate `.openWebsiteButtonTapped(_:)`, and fill in that function with a call to `openWebsite()`
-6. Now we can run the app and store our credentials in iCloud Keychain. Run the app, and tap on the Open Website bar button.
-7. Once Mobile Safari opens to the webpage, click Login in the header (You might have to scroll horizontally to get there)
-8. Enter any email address and password (it doesn't matter which, the site will accept any properly formatted email address and any password)
-9. Once you tap Login or hit the Enter key, you should be prompted by Mobile Safari to Save Password. Accept this prompt. 
+3. Now we can run the app and store our credentials in iCloud Keychain. Run the app.  
+4. Before you open the site, you need to login to iCloud inside the simulator. If you're not logged into iCloud, shared credentials can't be stored to your iCloud keychain. Navigate to the Settings app and ensure you're logged into your iCloud account.
+5. Now navigate back to the iOS app and tap on the Open Website bar button.
+6. Once Mobile Safari opens to the webpage, click Login in the header (You might have to scroll horizontally to get there)
+7. Enter any email address and password (it doesn't matter which, the site will accept any properly formatted email address and any password)
+8. Once you tap Login or hit the Enter key, you should be prompted by Mobile Safari to Save Password. Accept this prompt. 
   
 **Accessing Shared Credentials From Your App**
 
