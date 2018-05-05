@@ -1,14 +1,10 @@
 ## Introduction
 
-Hey what's up everybody, this is ___. In today's screencast, I'm going to introduce you to Shared Web Credentials. Shared Web Credentials is a technology Apple has introduced which allows seamless login into your iOS app after a user has logged into your website using Safari.
+Today, we're going to explore Shared Web Credentials. Shared Web Credentials is a technology Apple has introduced which allows seamless login into your iOS app after a user has logged into your website using Safari.
 
-Before we begin, I just want to give a shout out to the the Tech Editor of this content, David Worsham. 
-
-Ok, back to it. Shared Web Credentials works using iCloud Keychain, and establishes trust between your site and your app via the site association file. This is a file Apple requires you to host on your domain. If your user has opted into iCloud Keychain and has elected to store their credentials for your domain there, you will be able to present UI that allows them to use those same credentials to log in to your app without the need to type a username or password.
+Shared Web Credentials works using iCloud Keychain, and establishes trust between your site and your app via the site association file. This is a file Apple requires you to host on your domain. If your user has opted into iCloud Keychain and has elected to store their credentials for your domain there, you will be able to present UI that allows them to use those same credentials to log into your app without the need to type a username or password.
 
 There are 2 components that come together to ensure Shared Web Credentials can offer login functionality:
-
-(Display keynote slide here)
 
 #### Your Web Server
 From your domain, you must be able to serve up a file named **`apple-app-site-association`** from either the root of the domain or from a directory named **`.well-known`**. 
@@ -23,7 +19,7 @@ The following criteria must be met for the Shared Web Credentials functionality 
 - The json payload in the file must contain a `webcredentials` object
 - Inside the `webcredentials` object of this file, there has to be an array of bundle identifiers with the full team prefix. One of these identifiers has to match the one for your app.
 
-To easily meet those requirements for this demo, we're going to use the free Heroku web service to establish a domain.
+To easily meet those requirements for this tutorial, we're going to use the free [Heroku](http://heroku.com/) web service to establish a domain.
 
 #### Your iOS App
 Your app's bundle id has to match the one being referenced by the **`apple-app-site-assocation`** file on your web server. Your app must also enable the **Associated Domains** capability, and you have to add your site domain to the domain list with a **`webcredentials`** prefix.
@@ -36,7 +32,7 @@ We'll have to set up 2 components to make Shared Credentials work - the iOS app 
 
 #### Web App Setup
 
-Our next step is to set up our web server. Since Shared Web Credentials requires a functioning domain set up over SSL, we will use a free [Heroku](https://www.heroku.com) account. Heroku offers up to 5 free domains, and will satisfy this Apple requirement.
+Our first step is to set up our web server. Since Shared Web Credentials requires a functioning domain set up over SSL, we will use a free [Heroku](https://www.heroku.com) account. Heroku offers up to 5 free domains, and will satisfy this Apple requirement.
 
 1. Head on over to the [Heroku Site](https://www.heroku.com). Setup a free account if you don't already have one, and log in.
 2. Set up the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) following the instructions for macOS using either homebrew or the native installer
@@ -55,7 +51,7 @@ That's it for this section. On to the iOS app!
 
 #### iOS App Setup
 
-This app was created from the single view Xcode template. It is a single ViewController wrapped inside a NavigationController. All button actions and element outlets are wired up already, and we'll just be implementing the logic to enable the Shared Web Credentials functionality.
+The example app was created from the single view Xcode template. It is a single ViewController wrapped inside a NavigationController. All button actions and element outlets are wired up already, and we'll just be implementing the logic to enable the Shared Web Credentials functionality.
 
 ##### App Capabilities Setup
 
@@ -64,7 +60,7 @@ First we'll need to configure the app to use the Associated Domains capability:
 1. Open the starter app, and click the blue Project node in the File Navigator
 2. Select the General tab in the center pane
 3. Select the app target in the left pane under the Targets heading.
-4. Enter a Bundle Id in the Bundle Identifier field here. This bundle id will match the one you set up on the web app (minus the team id prefix) next
+4. Enter a Bundle Id in the Bundle Identifier field here. This bundle id should match the one you set up on the web app (minus the team id prefix) next
 ![bundle id](images/bundle-id.png)
 5. Select the Capabilties tab, scroll to the Associated Domains section, and click the switch to turn it on
 6. Click the **+** in this section, and enter your bundle id prefixed by `webcredentials:`. Example:  `webcredentials:com.test.shared-credentials`
